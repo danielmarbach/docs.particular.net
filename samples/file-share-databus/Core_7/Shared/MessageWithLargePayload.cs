@@ -1,4 +1,5 @@
 ﻿using NServiceBus;
+using System;
 
 #region MessageWithLargePayload
 
@@ -7,6 +8,7 @@
 public class MessageWithLargePayload :
     ICommand
 {
+    public Guid AttachmentID { get; set; }
     public string SomeProperty { get; set; }
     public DataBusProperty<byte[]> LargeBlob { get; set; }
 }

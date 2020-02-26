@@ -55,8 +55,9 @@ class Program
 
         var message = new MessageWithLargePayload
         {
+            AttachmentID = Guid.NewGuid(),
             SomeProperty = "This message contains a large blob that will be sent on the data bus",
-            LargeBlob = new DataBusProperty<byte[]>(new byte[1024*1024*5]) //5MB
+            LargeBlob = new DataBusProperty<byte[]>(new byte[64*64*5]) //5MB
         };
         await endpointInstance.Send("Samples.DataBus.Receiver", message)
             .ConfigureAwait(false);
