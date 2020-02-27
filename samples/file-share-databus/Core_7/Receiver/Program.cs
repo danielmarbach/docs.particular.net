@@ -1,8 +1,9 @@
 using System;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.Persistence.Sql;
+using NServiceBus.Pipeline;
 using Receiver.Commands;
 
 class Program
@@ -19,6 +20,7 @@ class Program
         var dataBus = endpointConfiguration.UseDataBus<FileShareDataBus>();
         dataBus.BasePath(@"..\..\..\..\storage");
 
+        endpointConfiguration.Pipeline.Register(new Behavior.Registration());
 
         var persistence = endpointConfiguration.UsePersistence<LearningPersistence>();
         //var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
@@ -52,5 +54,28 @@ class Program
         Console.ReadKey();
         await endpointInstance.Stop()
             .ConfigureAwait(false);
+    }
+
+    class Behavior : Behavior<IOutgoingLogicalMessageContext>
+    {
+        public override Task Invoke(IOutgoingLogicalMessageContext context, Func<Task> next)
+        {
+            if (context.Message.Instance is NewAttachmentCommand command && context.TryGetIncomingPhysicalMessage(out var incomingMessage))
+            {
+                var kvp = incomingMessage.Headers.Single(x => x.Key.StartsWith("NServiceBus.DataBus."));
+                context.Headers[kvp.Key] = kvp.Value;
+
+                command.LargeBlob = new DataBusProperty<byte[]> { Key = kvp.Value };
+            }
+            return next();
+        }
+
+        public class Registration : RegisterStep
+        {
+            public Registration() : base("DataBusSendHack", typeof(Behavior), "Readds the databus property")
+            {
+                InsertAfter("DataBusSend");
+            }
+        }
     }
 }

@@ -2,9 +2,6 @@
 using NServiceBus.Logging;
 using Receiver.Commands;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Receiver
@@ -25,24 +22,24 @@ namespace Receiver
 
         public Task Handle(MessageWithLargePayload message, IMessageHandlerContext context)
         {
-            Data.LargeBlob = message.LargeBlob;
+            log.Info($"Message initially received, size of blob property: {message.LargeBlob.Value.Length} Bytes");
 
             return context.SendLocal<NewAttachmentCommand>(m =>
             {
                 m.AttachmentID = message.AttachmentID;
+                m.LargeBlob = null;
             });
         }
 
         public Task Handle(NewAttachmentCommand message, IMessageHandlerContext context)
         {
-            log.Info($"Message received, size of blob property: {Data.LargeBlob.Value.Length} Bytes");
+            log.Info($"Message received, size of blob property: {message.LargeBlob.Value.Length} Bytes");
             return Task.CompletedTask;
         }
 
         public class State : ContainSagaData
         {
             public Guid AttachmentID { get; set; }
-            public DataBusProperty<byte[]> LargeBlob { get; set; }
         }
     }
 }

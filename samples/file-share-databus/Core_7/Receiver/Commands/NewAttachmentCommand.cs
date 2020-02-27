@@ -10,5 +10,6 @@ namespace Receiver.Commands
     public class NewAttachmentCommand : ICommand
     {
         public Guid AttachmentID { get; set; }
+        public DataBusProperty<byte[]> LargeBlob { get; set; }
     }
 }
