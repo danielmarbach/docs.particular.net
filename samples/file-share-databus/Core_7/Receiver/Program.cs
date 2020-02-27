@@ -60,12 +60,11 @@ class Program
     {
         public override Task Invoke(IOutgoingLogicalMessageContext context, Func<Task> next)
         {
-            if (context.Message.Instance is NewAttachmentCommand command && context.TryGetIncomingPhysicalMessage(out var incomingMessage))
+            if (context.Message.Instance is AttachInStages command && context.Extensions.TryGet<string>("LargeBlobKey", out var key))
             {
-                var kvp = incomingMessage.Headers.Single(x => x.Key.StartsWith("NServiceBus.DataBus."));
-                context.Headers[kvp.Key] = kvp.Value;
+                context.Headers["NServiceBus.DataBus." + key] = key;
 
-                command.LargeBlob = new DataBusProperty<byte[]> { Key = kvp.Value };
+                command.LargeBlob = new DataBusProperty<byte[]> { Key = key };
             }
             return next();
         }
